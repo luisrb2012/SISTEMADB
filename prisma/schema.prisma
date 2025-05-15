@@ -199,8 +199,10 @@ model PreExam {
 model VenousPuncture {
   id              String    @id @default(uuid())
   location        String?
-  scalpCatheter   String? @relation("scalpCatheter", map: "scalpCatheterFkey")
-  abocathCatheter String? @relation("abocathCatheter", map: "abocathCatheterFkey")
+  scalpCatheter   Catheter? @relation("scalpCatheter", fields: [scalpCatheterId], references: [id], map: "scalp_catheter_fkey")
+  scalpCatheterId String?
+  abocathCatheter Catheter? @relation("abocathCatheter", fields: [abocathCatheterId], references: [id], map: "abocath_catheter_fkey")
+  abocathCatheterId String?
   valvedExtender  Boolean   @default(false)
   
   examRoom        ExamRoom  @relation(fields: [examRoomId], references: [id])
@@ -212,8 +214,8 @@ model Catheter {
   size             String?
   used             Boolean        @default(false)
   
-  scalpPuncture    VenousPuncture? @relation("scalpCatheter")
-  abocathPuncture  VenousPuncture? @relation("abocathCatheter")
+  scalpPunctures   VenousPuncture[] @relation("scalpCatheter")
+  abocathPunctures VenousPuncture[] @relation("abocathCatheter")
 }
 
 model PostExam {
