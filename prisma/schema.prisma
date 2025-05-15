@@ -1,0 +1,252 @@
+// This is your Prisma schema file
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(uuid())
+  name      String
+  email     String   @unique
+  password  String
+  role      UserRole
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  anamneses Anamnesis[] @relation("createdBy")
+}
+
+enum UserRole {
+  TECH
+  RECEPTIONIST
+  DOCTOR
+  ADMIN
+}
+
+model Patient {
+  id         String     @id @default(uuid())
+  patientId  String     @unique // Número de identificação do paciente
+  name       String
+  birthDate  DateTime
+  gender     Gender
+  phone      String?
+  email      String?
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+
+  anamneses  Anamnesis[]
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+}
+
+model Anamnesis {
+  id                    String            @id @default(uuid())
+  patient               Patient           @relation(fields: [patientId], references: [id])
+  patientId             String
+  examType             ExamType
+  examSubtype          String?
+  hasConsent           Boolean           @default(false)
+  hasIdentificationTag Boolean           @default(false)
+  
+  // Patient Condition
+  patientCondition     PatientCondition?
+  
+  // Dental
+  hasDentalProsthesis Boolean           @default(false)
+  
+  // Previous Exams
+  previousExams        PreviousExams?
+  
+  // Personal History
+  personalHistory      PersonalHistory?
+  
+  // Medications
+  medications          Medication[]
+  
+  // Allergies
+  allergies           Allergy[]
+  contrastAllergy     Boolean           @default(false)
+  
+  // Exam Preparation
+  examPreparation     ExamPreparation?
+  
+  // Exam Room
+  examRoom            ExamRoom?
+  
+  // Post Exam
+  postExam            PostExam?
+  
+  // Reports
+  reports             Report[]
+  
+  // Signatures
+  patientSignature    String?
+  professionalSignature String?
+  signatureMethod     SignatureMethod?
+  
+  createdBy           User              @relation("createdBy", fields: [createdById], references: [id])
+  createdById         String
+  createdAt           DateTime          @default(now())
+  updatedAt           DateTime          @updatedAt
+}
+
+enum ExamType {
+  TOMOGRAPHY
+  RESONANCE
+  OTHER
+}
+
+model PatientCondition {
+  id               String    @id @default(uuid())
+  walking          Boolean   @default(false)
+  walkingWithHelp  Boolean   @default(false)
+  wheelchair       Boolean   @default(false)
+  stretcher        Boolean   @default(false)
+  sitting          Boolean   @default(false)
+  accompaniedBy    String?
+  oriented         Boolean   @default(false)
+  confused         Boolean   @default(false)
+  anxious          Boolean   @default(false)
+  calm             Boolean   @default(false)
+  phobic           Boolean   @default(false)
+  
+  anamnesis        Anamnesis @relation(fields: [anamnesisId], references: [id])
+  anamnesisId      String    @unique
+}
+
+model PreviousExams {
+  id          String    @id @default(uuid())
+  has         Boolean   @default(false)
+  description String?
+  
+  anamnesis   Anamnesis @relation(fields: [anamnesisId], references: [id])
+  anamnesisId String    @unique
+}
+
+model PersonalHistory {
+  id                  String    @id @default(uuid())
+  hasHAS             Boolean   @default(false)
+  hasDM              Boolean   @default(false)
+  hasAnxietyDepression Boolean   @default(false)
+  hasCardiopathy     Boolean   @default(false)
+  hasAsthma          Boolean   @default(false)
+  hasIRC             Boolean   @default(false)
+  hasCholesterol     Boolean   @default(false)
+  hasThyroid         Boolean   @default(false)
+  otherConditions    String?
+  
+  anamnesis          Anamnesis @relation(fields: [anamnesisId], references: [id])
+  anamnesisId        String    @unique
+}
+
+model Medication {
+  id          String    @id @default(uuid())
+  using       Boolean   @default(false)
+  description String?
+  
+  anamnesis   Anamnesis @relation(fields: [anamnesisId], references: [id])
+  anamnesisId String
+}
+
+model Allergy {
+  id          String    @id @default(uuid())
+  has         Boolean   @default(false)
+  description String?
+  unknown     Boolean   @default(false)
+  
+  anamnesis   Anamnesis @relation(fields: [anamnesisId], references: [id])
+  anamnesisId String
+}
+
+model ExamPreparation {
+  id           String    @id @default(uuid())
+  done         Boolean   @default(false)
+  fasting      Boolean   @default(false)
+  fastingHours String?
+  
+  anamnesis    Anamnesis @relation(fields: [anamnesisId], references: [id])
+  anamnesisId  String    @unique
+}
+
+model ExamRoom {
+  id             String         @id @default(uuid())
+  preExam        PreExam?
+  venousPuncture VenousPuncture?
+  
+  anamnesis      Anamnesis     @relation(fields: [anamnesisId], references: [id])
+  anamnesisId    String        @unique
+}
+
+model PreExam {
+  id            String    @id @default(uuid())
+  time          String?
+  bloodPressure String?
+  heartRate     String?
+  o2Saturation  String?
+  
+  examRoom      ExamRoom  @relation(fields: [examRoomId], references: [id])
+  examRoomId    String    @unique
+}
+
+model VenousPuncture {
+  id              String    @id @default(uuid())
+  location        String?
+  scalpCatheter   Catheter? @relation("scalpCatheter", map: "scalpCatheterFkey")
+  abocathCatheter Catheter? @relation("abocathCatheter", map: "abocathCatheterFkey")
+  valvedExtender  Boolean   @default(false)
+  
+  examRoom        ExamRoom  @relation(fields: [examRoomId], references: [id])
+  examRoomId      String    @unique
+}
+
+model Catheter {
+  id               String         @id @default(uuid())
+  size             String?
+  used             Boolean        @default(false)
+  
+  scalpPuncture    VenousPuncture? @relation("scalpCatheter")
+  abocathPuncture  VenousPuncture? @relation("abocathCatheter")
+}
+
+model PostExam {
+  id                     String    @id @default(uuid())
+  endTime               String?
+  peripheralAccessRemoved Boolean   @default(false)
+  vitals                Vitals?
+  
+  anamnesis             Anamnesis @relation(fields: [anamnesisId], references: [id])
+  anamnesisId           String    @unique
+}
+
+model Vitals {
+  id           String    @id @default(uuid())
+  time         String?
+  bloodPressure String?
+  heartRate    String?
+  o2Saturation String?
+  
+  postExam     PostExam  @relation(fields: [postExamId], references: [id])
+  postExamId   String    @unique
+}
+
+model Report {
+  id          String    @id @default(uuid())
+  dateTime    String
+  description String
+  
+  anamnesis   Anamnesis @relation(fields: [anamnesisId], references: [id])
+  anamnesisId String
+}
+
+enum SignatureMethod {
+  DRAWING
+  GOVBR
+}
