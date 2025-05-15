@@ -199,8 +199,8 @@ model PreExam {
 model VenousPuncture {
   id              String    @id @default(uuid())
   location        String?
-  scalpCatheter   Catheter? @relation("scalpCatheter", map: "scalpCatheterFkey")
-  abocathCatheter Catheter? @relation("abocathCatheter", map: "abocathCatheterFkey")
+  scalpCatheter   String? @relation("scalpCatheter", map: "scalpCatheterFkey")
+  abocathCatheter String? @relation("abocathCatheter", map: "abocathCatheterFkey")
   valvedExtender  Boolean   @default(false)
   
   examRoom        ExamRoom  @relation(fields: [examRoomId], references: [id])
