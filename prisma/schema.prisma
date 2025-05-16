@@ -1,0 +1,117 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(uuid())
+  name      String
+  email     String   @unique
+  password  String
+  role      UserRole
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  anamneses Anamnesis[] @relation("createdBy")
+}
+
+enum UserRole {
+  TECH
+  RECEPTIONIST
+  DOCTOR
+  ADMIN
+}
+
+model Patient {
+  id         String     @id @default(uuid())
+  patientId  String     @unique // Número de identificação do paciente
+  name       String
+  birthDate  DateTime
+  gender     Gender
+  phone      String?
+  email      String?
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+
+  anamneses  Anamnesis[]
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+}
+
+model Anamnesis {
+  id               String          @id @default(uuid())
+  patient          Patient         @relation(fields: [patientId], references: [id])
+  patientId        String
+  examType         ExamType
+  examSubtype      String?
+  medications      Medication[]
+  allergies        Allergy[]
+  contrastAllergy  Boolean         @default(false)
+  diseaseHistories DiseaseHistory[]
+  metallicDevices  MetallicDevice[]
+  pacemaker        Boolean         @default(false)
+  claustrophobia   Boolean         @default(false)
+  lastMenstruation DateTime?
+  pregnancy        Boolean         @default(false)
+  consentSigned    Boolean         @default(false)
+  signatureDataUrl String?
+  signatureGovBr   Boolean         @default(false)
+  additionalNotes  String
+  attachments      String[]        // URLs ou caminhos para arquivos
+  createdBy        User            @relation(fields: [createdById], references: [id], name: "createdBy")
+  createdById      String
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+}
+
+enum ExamType {
+  TOMOGRAPHY
+  RESONANCE
+  OTHER
+}
+
+model Medication {
+  id         String   @id @default(uuid())
+  name       String
+  dosage     String
+  frequency  String
+  anamnesis  Anamnesis @relation(fields: [anamnesisId], references: [id])
+  anamnesisId String
+}
+
+model Allergy {
+  id         String   @id @default(uuid())
+  type       String
+  reaction   String
+  anamnesis  Anamnesis @relation(fields: [anamnesisId], references: [id])
+  anamnesisId String
+}
+
+model DiseaseHistory {
+  id           String   @id @default(uuid())
+  condition    String
+  diagnosisYear String?
+  treatment    String?
+  anamnesis    Anamnesis @relation(fields: [anamnesisId], references: [id])
+  anamnesisId  String
+}
+
+model MetallicDevice {
+  id           String   @id @default(uuid())
+  type         String
+  location     String
+  yearImplanted String?
+  anamnesis    Anamnesis @relation(fields: [anamnesisId], references: [id])
+  anamnesisId  String
+}
